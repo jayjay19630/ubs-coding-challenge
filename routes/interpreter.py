@@ -162,6 +162,36 @@ def add(arg1, variables):
         else:
             sum += int(arg)
     return sum
+
+def subtract(arg1, variables):
+    args = arg1.split(" ")
+    sum = 0
+    for arg in args:
+        if arg in variables:
+            sum += variables[arg]
+        else:
+            sum += int(arg)
+    return sum
+
+def divide(arg1, variables):
+    args = arg1.split(" ")
+    sum = 0
+    for arg in args:
+        if arg in variables:
+            sum += variables[arg]
+        else:
+            sum += int(arg)
+    return sum
+
+def multiply(arg1, variables):
+    args = arg1.split(" ")
+    sum = 0
+    for arg in args:
+        if arg in variables:
+            sum += variables[arg]
+        else:
+            sum += int(arg)
+    return sum
     
 def evaluate(exp, variables, output):
     args = exp[1:-1].split(" ", 1)
@@ -185,6 +215,8 @@ def evaluate(exp, variables, output):
 def evaluateAll(expressions):
     variables = {}
     output = []
+    
+    print(expressions)
     
     for exp in expressions:
         evaluate(exp, variables, output)
