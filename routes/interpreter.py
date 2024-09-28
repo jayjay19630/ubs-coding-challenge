@@ -67,12 +67,12 @@ def sets(arg, variables):
     if is_function_invocation(arg_to_set):
         arg_to_set = evaluate(arg_to_set, variables, [])
     
-    if isinstance(arg_to_set, str):
-        variables[name] = get_string(arg_to_set)
     elif is_bool(arg_to_set):
         variables[name] = bool(arg_to_set)
     elif is_number(arg_to_set):
         variables[name] = float(arg_to_set)
+    else:
+        variables[name] = get_string(arg_to_set)
         
     return None
 
