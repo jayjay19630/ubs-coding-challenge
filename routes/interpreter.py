@@ -178,7 +178,7 @@ def evaluateAll(expressions):
     
 @app.route('/lisp-parser', methods=['POST'])
 def parse():
-    req = request.data
+    req = request.json
     expressions = req["expressions"]
     output = evaluateAll(expressions)
     return jsonify({"output": output})
