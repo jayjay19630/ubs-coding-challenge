@@ -58,8 +58,10 @@ def puts(arg, variables, output):
         res = get_string(arg)
     else:
         res = str(arg)
-    
-    if isinstance(res, float):
+        
+    if isinstance(res, int):
+        output.append(res)
+    elif isinstance(res, float):
         output.append(round(res, 4))
     else:
         output.append(res)
@@ -200,22 +202,31 @@ def parse_arguments(arg1):
 
 def add(arg1, variables):
     args = parse_arguments(arg1)
-    total_sum = 0.0  # Initialize as float
+    
+    total_sum = 0  # Start with 0, but we will dynamically adjust
+    is_int = True  # Track if all arguments are integers
+    
+    if len(args) == 1:
+        raise Exception("Addition requires more than one argument")
+    
     for arg in args:
         if is_function_invocation(arg):
-            total_sum += evaluate(arg, variables, [])  # Evaluate function
+            value = evaluate(arg, variables, [])  # Evaluate function
         elif arg in variables:
-            total_sum += float(variables[arg])  # Fetch value from variables
+            value = float(variables[arg]) if '.' in str(variables[arg]) else int(variables[arg])
         else:
-            total_sum += float(arg)  # Convert to float
-    return round(total_sum, 4)  # Round to 4 decimal places
+            value = float(arg) if '.' in str(arg) else int(arg)
+        
+        is_int = is_int and isinstance(value, int)
+        total_sum += value
+    
+    return int(total_sum) if is_int else round(total_sum, 4)  # Return int or rounded float
+
 
 def mini(arg1, variables):
     args = parse_arguments(arg1)
     mini = float('inf')
     for arg in args:
-        print(arg)
-        print(variables)
         if is_function_invocation(arg):
             mini = min(mini, evaluate(arg, variables, []))  # Evaluate function
         elif arg in variables:
@@ -238,24 +249,36 @@ def maxi(arg1, variables):
 
 def subtract(arg1, variables):
     args = parse_arguments(arg1)
+    
+    is_int = True  # Track if all arguments are integers
+    
     if is_function_invocation(args[0]):
         result = evaluate(args[0], variables, [])  # Evaluate function
+        is_int = is_int and isinstance(result, int)
     elif args[0] in variables:
-        result = float(variables[args[0]])  # Convert to float
+        result = float(variables[args[0]]) if '.' in str(variables[args[0]]) else int(variables[args[0]])
+        is_int = is_int and isinstance(result, int)
     else:
-        result = float(args[0])  # Initialize with the first argument
+        result = float(args[0]) if '.' in str(args[0]) else int(args[0])
+        is_int = is_int and isinstance(result, int)
     
     for arg in args[1:]:
         if is_function_invocation(arg):
-            result -= evaluate(arg, variables, [])  # Evaluate function
+            value = evaluate(arg, variables, [])  # Evaluate function
         elif arg in variables:
-            result -= float(variables[arg])  # Fetch value from variables
+            value = float(variables[arg]) if '.' in str(variables[arg]) else int(variables[arg])
         else:
-            result -= float(arg)  # Convert to float
-    return result
+            value = float(arg) if '.' in str(arg) else int(arg)
+        
+        is_int = is_int and isinstance(value, int)
+        result -= value  # Subtract the value
+    
+    return int(result) if is_int else float(result)
 
 def divide(arg1, variables):
     args = parse_arguments(arg1)
+    if len(args) == 1:
+        raise Exception()
     if is_function_invocation(args[0]):
         result = evaluate(args[0], variables)  # Evaluate function
     elif args[0] in variables:
@@ -323,7 +346,11 @@ def substring(arg1, variables):
     # Extract and return the substring
     result = source[start:end]
     return result
-    
+
+def abso(arg1, variables):
+    args = simplify(parse_arguments(arg1)[0])
+    return abs(args)
+
 def evaluate(exp, variables, output):
     args = exp[1:-1].split(" ", 1)
     function = args[0]
@@ -355,6 +382,8 @@ def evaluate(exp, variables, output):
         return maxi(args[1], variables)
     elif function == "min":
         return mini(args[1], variables)
+    elif function == "abs":
+        return abso(args[1], variables)
 
 
 def evaluateAll(expressions):
@@ -363,8 +392,13 @@ def evaluateAll(expressions):
     
     print(expressions)
     
-    for exp in expressions:
-        evaluate(exp, variables, output)
+    for line_number, exp in enumerate(expressions, start=1):
+        try:
+            evaluate(exp, variables, output)
+        except Exception as e:
+            error_message = f"ERROR at line {line_number}"
+            output.append(error_message)
+            return output
       
     return output
     
