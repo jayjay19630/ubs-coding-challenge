@@ -2,13 +2,30 @@ import logging
 import re
 
 from flask import request, jsonify
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from routes import app
 
 logger = logging.getLogger(__name__)
 
+# Function to preprocess the increment rule and avoid using 'count *' during processing
+def preprocess_increment_rule(increment):
+    increment = increment.strip()
 
+    if increment == 'count * count':
+        return lambda count: count * count  # Preprocess to square the count
+    elif 'count *' in increment:
+        # Extract the multiplier and return a function that multiplies the count
+        factor = int(increment.split('*')[1].strip())
+        return lambda count: count * factor
+    elif 'count +' in increment:
+        # Extract the addend and return a function that adds the value
+        addend = int(increment.split('+')[1].strip())
+        return lambda count: count + addend
+    else:
+        # Default: if no valid rule, return the count unchanged
+        return lambda count: count
+    
 # Function to parse the markdown input into structured data
 def parse_markdown_table(md_table):
     labs = []
@@ -22,7 +39,7 @@ def parse_markdown_table(md_table):
 
         lab = int(parts[1])  # Lab ID
         cell_counts = list(map(int, parts[2].split()))  # Cell counts
-        increment = parts[3].strip()  # Increment rule
+        increment = preprocess_increment_rule(parts[3].strip())  # Increment rule
         condition = list(map(int, parts[4].split()))  # Condition (three numbers)
 
         labs.append({
@@ -34,23 +51,6 @@ def parse_markdown_table(md_table):
 
     return labs
 
-# Function to apply the increment rule to cell counts
-def apply_increment(cell_count, increment):
-    # Handle both count * <number> and count + <number>
-    if 'count *' in increment:
-        factor = increment.split('*')[1].strip()
-        if factor == 'count':
-            return cell_count * cell_count
-        else:
-            return cell_count * int(factor)
-    elif 'count +' in increment:
-        addend = increment.split('+')[1].strip()
-        if addend == 'count':
-            return cell_count + cell_count
-        else:
-            return cell_count + int(addend)
-    return cell_count
-
 def simulate_lab_work(labs, total_days=10000, interval=1000):
     analysis_count = defaultdict(int)  # Tracks counts at intervals for each lab
     lab_dict = defaultdict(dict)  # Stores each lab's working dishes and conditions
@@ -59,7 +59,7 @@ def simulate_lab_work(labs, total_days=10000, interval=1000):
     # Populate lab_dict with data from labs
     for lab in labs:
         lab_dict[lab['lab']] = {
-            'cell_counts': lab['cell_counts'],
+            'cell_counts': deque(lab['cell_counts']),
             'increment': lab['increment'],
             'condition': lab['condition']
         }
@@ -78,20 +78,17 @@ def simulate_lab_work(labs, total_days=10000, interval=1000):
             div, lab_if_true, lab_if_false = lab_dict[key]['condition']
 
             cell_counts = lab_dict[key]["cell_counts"]
-            n = len(cell_counts)
 
-            for _ in range(n):
-                cell_count = cell_counts.pop(0)  # Remove the first element in the queue
-                new_cell = apply_increment(cell_count, increment_rule)
+            while cell_counts:
+                cell_count = cell_counts.popleft()  # Remove the first element in the queue
+                new_cell = increment_rule(cell_count)
                 
                 # Pass the new cell to the appropriate lab based on the condition
                 if new_cell % div == 0:
                     next_lab_work[lab_if_true].append(new_cell)
                 else:
                     next_lab_work[lab_if_false].append(new_cell)
-            
-            # Increment the number of dishes processed for this lab
-            analysis_count[key] += n
+                analysis_count[key] += 1            
         
             # Move the dishes to the respective labs for the next day
             for key in next_lab_work:
@@ -101,6 +98,8 @@ def simulate_lab_work(labs, total_days=10000, interval=1000):
         
         if day % interval == 0:
             res[day] = [analysis_count[key] for key in lab_keys]
+        print(day)
+        print(analysis_count)
 
     return res
 
