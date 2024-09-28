@@ -6,3 +6,4 @@ import routes.tourist
 import routes.coolcodehack
 import routes.dodgebullet
 import routes.interpreter
+import routes.payload
