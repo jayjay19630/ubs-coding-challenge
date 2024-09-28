@@ -299,9 +299,12 @@ def equal(arg1, variables):
         arg2 = evaluate(arg2, variables, [])
     elif arg2 in variables:
         arg2 = variables[arg2]
-
-    if arg1 == "null" and arg2 == "null":
-        return "true"
+        
+    if arg1 == "null" or arg2 == "null":
+        if arg1 == "null" and arg2 == "null":
+            return "true"
+        else:
+            return "false"
     try:
         if get_string(arg1) == get_string(arg2):
             return "true"
@@ -318,7 +321,11 @@ def equal(arg1, variables):
         
     
 def not_equal(arg1, variables):
-    return not equal(arg1, variables)
+    value = equal(arg1, variables)
+    if value == "true":
+        return "false"
+    else:
+        return "true"
 
 def evaluate(exp, variables, output):
     args = exp[1:-1].split(" ", 1)
