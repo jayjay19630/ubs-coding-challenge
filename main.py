@@ -44,116 +44,70 @@ def get_string(exp):
     pattern = r'\"(.*?)\"'
     return re.findall(pattern, exp)[0]
 
-def puts(arg, variables, output):
-    #checks func
+def puts(arg, variables, output): #done
+    res = arg
     if is_function_invocation(arg):
         res = evaluate(arg, variables, output)  
     elif arg in variables:
         res = variables[arg]
-    elif arg.strip().startswith("\""):
-        res = get_string(arg)
-    else:
-        res = str(arg)
         
-    if isinstance(res, int):
-        output.append(res)
-    elif isinstance(res, float):
-        output.append(round(res, 4))
-    else:
-        output.append(res)
+    output.append(get_string(res))
+    
+    return None
 
-def sets(arg, variables):
+def sets(arg, variables): #done
     args = arg.split(" ", 1)
     name = args[0]
     arg_to_set = args[1]
     
+    if name in variables:
+        raise Exception()
+
     #checks func
     if is_function_invocation(arg_to_set):
-        arg_to_set = evaluate(arg_to_set, variables, [])
-    
-    elif is_bool(arg_to_set):
-        variables[name] = bool(arg_to_set)
-    elif is_number(arg_to_set):
-        variables[name] = float(arg_to_set)
+        variables[name] = evaluate(arg_to_set, variables, [])
     else:
-        variables[name] = get_string(arg_to_set)
+        variables[name] = arg_to_set
         
     return None
 
-def concat(arg, variables):
-    arg = arg.strip()
-    
-    if not arg.strip().startswith('\"'):
-        
-        func_end = find_function_end(arg)
-        if func_end > 0:
-            # First part is a function invocation
-            arg1 = arg[:func_end].strip()  # The function invocation
-            arg2 = arg[func_end:].strip()  # The rest of the argument
-        else:
-            # Split the argument into two parts
-            args = arg.split(" ", 1)
-            arg1 = args[0].strip()
-            arg2 = args[1].strip()
 
-        if is_function_invocation(arg1):
-            arg1 = evaluate(arg1, variables, [])
-        else:
-            arg1 = variables[arg1]
-        
-        if is_function_invocation(arg2):
-            arg2 = evaluate(arg2, variables, [])
-        elif arg2 in variables:
-            arg2 = variables[arg2]
-        else:
-            arg2 = get_string(arg2)
-            
-        return arg1 + arg2
+def concat(arg, variables): 
+    args = parse_arguments(arg)
+    arg1 = find_string(args[0], variables)
+    arg2 = find_string(args[1], variables)
     
-    else:
-        # First part is a quoted string
-        string_end = find_string_end(arg)  # Find where the first quoted string ends
-        arg1 = re.findall(r'\"(.*?)\"', arg)[0]  # Extract the first quoted string
-        remaining = arg[string_end:].strip()  # The remaining part of the argument
-
-        # Handle the second argument (variable, function invocation, or string)
-        if remaining:
-            if is_function_invocation(remaining):
-                arg2 = evaluate(remaining, variables, [])
-            elif remaining in variables:
-                arg2 = variables[remaining]
-            else:
-                arg2 = get_string(remaining)
-        else:
-            arg2 = ""
-
-        return arg1 + arg2
+    return "\"" + get_string(arg1) + get_string(arg2) + "\""
     
-def lowercase(arg1, variables):    
+def lowercase(arg1, variables): #done
     if is_function_invocation(arg1):
         arg1 = evaluate(arg1, variables, [])
-    
-    if arg1 in variables:
-        return variables[arg1].lower()
-    else:
-        return get_string(arg1).lower()
+    elif arg1 in variables:
+        arg1 = variables[arg1]
+        
+    return "\"" + get_string(arg1).lower() + "\""
 
-def uppercase(arg1, variables):
+def uppercase(arg1, variables): #done
     if is_function_invocation(arg1):
         arg1 = evaluate(arg1, variables, [])
+    elif arg1 in variables:
+        arg1 = variables[arg1]
+        
+    return "\"" + get_string(arg1).upper() + "\""
     
-    if arg1 in variables:
-        return variables[arg1].upper()
-    else:
-        return get_string(arg1).upper()
+def stri(arg1, variables): #done
+    if is_function_invocation(arg1):
+        arg1 = evaluate(arg1, variables, [])
+    elif arg1 in variables:
+        arg1 = variables[arg1]
     
-def stri(arg1, variables):
-    if arg1 in variables:
-        return str(variables[arg1])
-    elif is_function_invocation(arg1):
-        return str(evaluate(arg1, variables, []))
+    if arg1.startswith("\""):
+        return arg1
     else:
-        return str(arg1)
+        if "." in arg1:
+            idx = arg1.find(".")
+            return "\"" + arg1[:idx + 5] + "\""
+        return "\"" + arg1 + "\""
     
 def parse_arguments(arg1):
     """Custom function to split arguments, respecting function applications and escaped strings."""
@@ -196,7 +150,7 @@ def parse_arguments(arg1):
 
     return args
 
-def add(arg1, variables):
+def add(arg1, variables): #done
     args = parse_arguments(arg1)
     
     total_sum = 0  # Start with 0, but we will dynamically adjust
@@ -206,46 +160,68 @@ def add(arg1, variables):
         raise Exception("Addition requires more than one argument")
     
     for arg in args:
-        if is_function_invocation(arg):
-            value = evaluate(arg, variables, [])  # Evaluate function
-        elif arg in variables:
-            value = float(variables[arg]) if '.' in str(variables[arg]) else int(variables[arg])
-        else:
-            value = float(arg) if '.' in str(arg) else int(arg)
+        value = get_number(arg, variables)
         
         is_int = is_int and isinstance(value, int)
         total_sum += value
     
-    return int(total_sum) if is_int else round(total_sum, 4)  # Return int or rounded float
+    return str(int(total_sum) if is_int else total_sum)  # Return int or  float
 
 
-def mini(arg1, variables):
+def mini(arg1, variables): #done
     args = parse_arguments(arg1)
     mini = float('inf')
     for arg in args:
-        if is_function_invocation(arg):
-            mini = min(mini, evaluate(arg, variables, []))  # Evaluate function
-        elif arg in variables:
-            mini = min(mini, variables[arg])  # Fetch value from variables
-        else:
-            mini = min(mini, float(arg))  # Convert to float
-    return round(mini, 4)  # Round to 4 decimal places
+        mini = min(mini, get_number(arg, variables))
+    return str(mini)  
 
-def maxi(arg1, variables):
+def maxi(arg1, variables): #done
     args = parse_arguments(arg1)
     maxi = float('-inf')
     for arg in args:
-        if is_function_invocation(arg):
-            maxi = max(maxi, evaluate(arg, variables, []))  # Evaluate function
-        elif arg in variables:
-            maxi = max(maxi, float(variables[arg]))  # Fetch value from variables
-        else:
-            maxi = max(maxi, float(arg))  # Convert to float
-    return maxi
+        maxi = max(maxi, get_number(arg, variables))
+    return str(maxi)
 
-def subtract(arg1, variables):
-    args = parse_arguments(arg1)
+def get_number(arg, variables): #done
+    if is_function_invocation(arg):
+        return get_number(evaluate(arg, variables, []), variables)
+    elif arg in variables:
+        return float(variables[arg]) if "." in variables[arg] else int(variables[arg])
+    else:
+        return float(arg) if "." in arg else int(arg)
     
+def find_string(arg, variables):
+    if is_function_invocation(arg):
+        return evaluate(arg, variables, [])
+    elif arg in variables:
+        return variables[arg]
+    else:
+        return arg
+
+
+def gt(arg1, variables): #done
+    args = parse_arguments(arg1)
+    arg1 = get_number(args[0], variables)
+    arg2 = get_number(args[1], variables)
+    if arg1 > arg2:
+        return "true"
+    else:
+        return "false"
+
+def lt(arg1, variables): #done
+    args = parse_arguments(arg1)
+    arg1 = get_number(args[0], variables)
+    arg2 = get_number(args[1], variables)
+
+    if arg1 < arg2:
+        return "true"
+    else:
+        return "false"
+
+
+def subtract(arg1, variables): 
+    args = parse_arguments(arg1)
+        
     is_int = True  # Track if all arguments are integers
     
     if is_function_invocation(args[0]):
@@ -275,52 +251,30 @@ def divide(arg1, variables):
     args = parse_arguments(arg1)
     if len(args) == 1:
         raise Exception()
-    if is_function_invocation(args[0]):
-        result = evaluate(args[0], variables)  # Evaluate function
-    elif args[0] in variables:
-        result = float(variables[args[0]])  # Convert to float
-    else:
-        result = float(args[0])  # Initialize with the first argument
+    arg1 = get_number(args[0], variables)
+    arg2 = get_number(args[1], variables)
     
-    for arg in args[1:]:
-        if is_function_invocation(arg):
-            result /= evaluate(arg, variables, [])  # Evaluate function
-        elif arg in variables:
-            result /= float(variables[arg])  # Fetch value from variables
-        else:
-            result /= float(arg)  # Convert to float
-    return result
+    return str(arg1 / arg2)
 
 def multiply(arg1, variables):
     args = parse_arguments(arg1)
-    product = 1.0  # Initialize as float
+    product = 1
+    
+    if len(args) == 1:
+        raise Exception("Addition requires more than one argument")
     
     for arg in args:
-        if is_function_invocation(arg):
-            product *= evaluate(arg, variables, [])  # Evaluate function
-        elif arg in variables:
-            product *= float(variables[arg])  # Fetch value from variables
-        else:
-            product *= float(arg)  # Convert to float
-    return product
-
-def simplify(arg, variables):
-    if is_function_invocation(arg):
-        return evaluate(arg)
-    elif arg in variables:
-        return variables[arg]
-    elif arg.startswith("\""):
-        return get_string(arg)
-    else:
-        return arg
+        value = get_number(arg, variables)
+        product *= value
+    return str(product)
 
 def replace(arg1, variables):
     args = parse_arguments(arg1)
 
     # Simplify each argument to resolve variables and functions
-    source = simplify(args[0], variables)
-    target = simplify(args[1], variables)
-    replacement = simplify(args[2], variables)
+    source = find_string(args[0], variables)
+    target = get_string(find_string(args[1], variables))
+    replacement = get_string(find_string(args[2], variables))
 
     # Replace all occurrences of the target in the source
     result = source.replace(target, replacement)
@@ -331,21 +285,20 @@ def substring(arg1, variables):
     args = parse_arguments(arg1)
 
     # Simplify each argument: source (string), start (int), end (int)
-    source = simplify(args[0], variables)
-    start = int(simplify(args[1], variables))
-    end = int(simplify(args[2], variables))
-
+    source = get_string(find_string(args[0], variables))
+    start = get_number(args[1], variables)
+    end = get_number(args[2], variables)
     # Ensure valid range
-    if start < 0 or end < 0 or start > end or end > len(source):
+    if start < 0 or end < 0 or start > end or end >= len(source):
         raise ValueError("Invalid start or end index.")
     
     # Extract and return the substring
     result = source[start:end]
-    return result
+    return "\"" + result + "\""
 
 def abso(arg1, variables):
-    args = simplify(parse_arguments(arg1)[0])
-    return abs(args)
+    res = get_number(arg1, variables)
+    return str(abs(res))
 
 def evaluate(exp, variables, output):
     args = exp[1:-1].split(" ", 1)
@@ -380,21 +333,20 @@ def evaluate(exp, variables, output):
         return mini(args[1], variables)
     elif function == "abs":
         return abso(args[1], variables)
-
-
+    elif function == "gt":
+        return gt(args[1], variables)
+    elif function == "lt":
+        return lt(args[1], variables)
+    
 def evaluateAll(expressions):
     variables = {}
     output = []
     
     for line_number, exp in enumerate(expressions, start=1):
-        try:
             evaluate(exp, variables, output)
-        except Exception as e:
-            error_message = f"ERROR at line {line_number}"
-            output.append(error_message)
-            return output
-      
+            
     return output
+
     
 def parse(request):
     expressions = request["expressions"]
@@ -402,18 +354,14 @@ def parse(request):
     return {"output": output}
 
 
+#when  i get home, change round to just get last 4 dp by string
 request = {
     "expressions": [
-        "(puts (add 5 5))",
-        "(puts \"Hello World!\")",
+        "(puts \"heloo\")",
         "(set x 5)",
-        "(puts (concat \"ab\" \"c\"))",
-        "(puts (str (add 5 5.0 5)))",
-        "(puts (str (add (subtract (multiply (divide -1151 8297) (add -8803 -9473.4851)) 4100) 9799)))",
-        "(puts (str (subtract 500 259)))",
-        "(puts (add 1))",
-        "(puts (substring \"abcdef\" 140 168))",
-        "(puts (replace \"Hello World\" \"World\" \"There\"))"
+        "(puts (uppercase (lowercase (str (abs (multiply 1 324 -34))))))",
+        "(puts (concat \"heloo\" (concat \"heloo\" \"heloo\")))",
+        "(puts (replace \"heloo\" \"o\" (concat \"heloo\" \"heloo\")))"
     ]
 }
 print(parse(request))
