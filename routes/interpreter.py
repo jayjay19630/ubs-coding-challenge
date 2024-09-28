@@ -58,7 +58,7 @@ def puts(arg, variables, output): #done
         
     output.append(get_string(res))
     
-    return None
+    return "null"
 
 def sets(arg, variables): #done
     args = arg.split(" ", 1)
@@ -74,7 +74,7 @@ def sets(arg, variables): #done
     else:
         variables[name] = arg_to_set
         
-    return None
+    return "null"
 
 
 def concat(arg, variables): 
@@ -264,7 +264,8 @@ def replace(arg1, variables):
     result = source.replace(target, replacement)
 
     return result
-        
+
+
 def substring(arg1, variables):
     args = parse_arguments(arg1)
 
@@ -283,6 +284,41 @@ def substring(arg1, variables):
 def abso(arg1, variables):
     res = get_number(arg1, variables)
     return str(abs(res))
+
+def equal(arg1, variables):
+    args = parse_arguments(arg1)
+    arg1 = args[0]
+    arg2 = args[1]
+    
+    if is_function_invocation(arg1):
+        arg1 = evaluate(arg1, variables, [])
+    elif arg1 in variables:
+        arg1 = variables[arg1]
+        
+    if is_function_invocation(arg2):
+        arg2 = evaluate(arg2, variables, [])
+    elif arg2 in variables:
+        arg2 = variables[arg2]
+
+    if arg1 == "null" and arg2 == "null":
+        return "true"
+    try:
+        if get_string(arg1) == get_string(arg2):
+            return "true"
+        else:
+            return "false"
+    except:
+        try:
+            if get_number(arg1) == get_number(arg2):
+                return "true"
+            else: 
+                return "false"
+        except:
+            return "false"
+        
+    
+def not_equal(arg1, variables):
+    return not equal(arg1, variables)
 
 def evaluate(exp, variables, output):
     args = exp[1:-1].split(" ", 1)
@@ -321,6 +357,10 @@ def evaluate(exp, variables, output):
         return gt(args[1], variables)
     elif function == "lt":
         return lt(args[1], variables)
+    elif function == "equal":
+        return equal(args[1], variables)
+    elif function == "not_equal":
+        return not_equal(args[1], variables)
     
 def evaluateAll(expressions):
     variables = {}
