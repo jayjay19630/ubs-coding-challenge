@@ -36,9 +36,6 @@ def move_bullets(bullets, grid):
         # Ensure bullets stay inside the grid, or stop moving if they go out of bounds
         if 0 <= new_r < len(grid) and 0 <= new_c < len(grid[0]):
             new_bullets.append((new_r, new_c, direction))
-        else:
-            # If bullets go out of bounds, they stay in their original position
-            new_bullets.append((r, c, direction))
     
     return new_bullets
 
@@ -73,6 +70,8 @@ def is_safe_after_bullet_move(r, c, bullets):
 
 # Recursive DFS to dodge bullets without using a visited set
 def dodge_bullets(grid, player_pos, bullets, instructions):
+    print(bullets)
+    print(player_pos)
     for dr, dc, move in move_directions:
         new_r = player_pos[0] + dr
         new_c = player_pos[1] + dc
@@ -101,6 +100,10 @@ def dodge_endpoint():
     # Use request.data to fetch the text body
     map_str = request.data.decode('utf-8')
     grid, player_pos, bullets = parse_map(map_str)
+    
+    print(grid)
+    print(player_pos)
+    print(bullets)
     
     # Try to find instructions to dodge all bullets using DFS without visited set
     instructions = dodge_bullets(grid, player_pos, bullets, [])
