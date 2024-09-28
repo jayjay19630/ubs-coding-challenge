@@ -191,6 +191,30 @@ def add(arg1, variables):
             total_sum += float(arg)  # Convert to float
     return round(total_sum, 4)  # Round to 4 decimal places
 
+def mini(arg1, variables):
+    args = parse_arguments(arg1)
+    mini = float('inf')
+    for arg in args:
+        if is_function_invocation(arg):
+            mini = min(mini, evaluate(arg, variables, []))  # Evaluate function
+        elif arg in variables:
+            mini = min(mini, variables[arg])  # Fetch value from variables
+        else:
+            mini = min(mini, float(arg))  # Convert to float
+    return round(mini, 4)  # Round to 4 decimal places
+
+def maxi(arg1, variables):
+    args = parse_arguments(arg1)
+    maxi = float('-inf')
+    for arg in args:
+        if is_function_invocation(arg):
+            maxi = max(maxi, evaluate(arg, variables, []))  # Evaluate function
+        elif arg in variables:
+            maxi = max(maxi, float(variables[arg]))  # Fetch value from variables
+        else:
+            maxi = max(maxi, float(arg))  # Convert to float
+    return round(maxi, 4)  # Round to 4 decimal places
+
 def subtract(arg1, variables):
     args = parse_arguments(arg1)
     if is_function_invocation(args[0]):
@@ -240,6 +264,12 @@ def multiply(arg1, variables):
             product *= float(arg)  # Convert to float
     return round(product, 4)  # Round to 4 decimal places
     
+def replace(arg1, variables):
+    return ""
+
+def substring(arg1, variables):
+    return ""
+    
 def evaluate(exp, variables, output):
     args = exp[1:-1].split(" ", 1)
     function = args[0]
@@ -263,6 +293,14 @@ def evaluate(exp, variables, output):
         return subtract(args[1], variables)
     elif function =="divide":
         return divide(args[1], variables)
+    elif function == "replace":
+        return replace(args[1], variables)
+    elif function == "substring":
+        return substring(args[1], variables)
+    elif function == "max":
+        return maxi(args[1], variables)
+    elif function == "min":
+        return mini(args[1], variables)
 
 
 def evaluateAll(expressions):
