@@ -49,8 +49,13 @@ opp_bullet = {
 }
 
 # Helper to check if a move is safe
-def is_safe_move(r, c, move, grid):
-    return 0 <= r < len(grid) and 0 <= c < len(grid[0]) and grid[r][c] != opp_bullet[move]
+def is_safe_move(r, c, move, grid, bullets):
+    if 0 <= r < len(grid) and 0 <= c < len(grid[0]):
+        for (br, bc, m) in bullets:
+            if r == br and c == bc and opp_bullet[move] == m:
+                return False
+        return True
+    return False
 
 # Helper to check if a bullet will hit the player after its move
 def is_safe_after_bullet_move(r, c, bullets):
@@ -77,7 +82,7 @@ def dodge_bullets(grid, player_pos, bullets, instructions):
         new_c = player_pos[1] + dc
         
         # Check if the move is safe
-        if is_safe_move(new_r, new_c, move, grid) and is_safe_after_bullet_move(new_r, new_c, bullets):
+        if is_safe_move(new_r, new_c, move, grid, bullets) and is_safe_after_bullet_move(new_r, new_c, bullets):
             next_bullets = move_bullets(bullets, grid)
             new_instructions = instructions[:] + [move]
             
