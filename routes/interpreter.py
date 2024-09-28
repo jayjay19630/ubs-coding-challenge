@@ -158,29 +158,44 @@ def stri(arg1, variables):
         return str(arg1)
     
 def parse_arguments(arg1):
-    """Custom function to split arguments, respecting function applications."""
+    """Custom function to split arguments, respecting function applications and escaped strings."""
     args = []
     current_arg = []
     depth = 0  # To track parentheses
+    inside_string = False  # To track whether we're inside an escaped string
 
-    for char in arg1:
-        if char == '(':
+    i = 0
+    while i < len(arg1):
+        char = arg1[i]
+
+        # Toggle the inside_string flag when we encounter an escaped quote (but not in the middle of a function)
+        if char == '\\' and i + 1 < len(arg1) and arg1[i + 1] == '"':
+            inside_string = not inside_string
+            current_arg.append(char)  # Add the backslash to the current_arg
+            current_arg.append(arg1[i + 1])  # Add the quote to the current_arg
+            i += 2
+            continue
+
+        # Handle parentheses for function invocation depth, but only when not inside a string
+        if char == '(' and not inside_string:
             depth += 1
-        elif char == ')':
+        elif char == ')' and not inside_string:
             depth -= 1
-        
-        if char == ' ' and depth == 0:
-            # Only split on spaces outside of function invocations
+
+        # Split only when we're outside function invocations and strings
+        if char == ' ' and depth == 0 and not inside_string:
             if current_arg:
                 args.append(''.join(current_arg).strip())
                 current_arg = []
         else:
             current_arg.append(char)
-    
+        
+        i += 1
+
     # Add the last argument if present
     if current_arg:
         args.append(''.join(current_arg).strip())
-    
+
     return args
 
 def add(arg1, variables):
@@ -269,12 +284,45 @@ def multiply(arg1, variables):
         else:
             product *= float(arg)  # Convert to float
     return product
-    
-def replace(arg1, variables):
-    return ""
 
+def simplify(arg, variables):
+    if is_function_invocation(arg):
+        return evaluate(arg)
+    elif arg in variables:
+        return variables[arg]
+    elif arg.startswith("\""):
+        return get_string(arg)
+    else:
+        return arg
+
+def replace(arg1, variables):
+    args = parse_arguments(arg1)
+
+    # Simplify each argument to resolve variables and functions
+    source = simplify(args[0], variables)
+    target = simplify(args[1], variables)
+    replacement = simplify(args[2], variables)
+
+    # Replace all occurrences of the target in the source
+    result = source.replace(target, replacement)
+
+    return result
+        
 def substring(arg1, variables):
-    return ""
+    args = parse_arguments(arg1)
+
+    # Simplify each argument: source (string), start (int), end (int)
+    source = simplify(args[0], variables)
+    start = int(simplify(args[1], variables))
+    end = int(simplify(args[2], variables))
+
+    # Ensure valid range
+    if start < 0 or end < 0 or start > end or end > len(source):
+        raise ValueError("Invalid start or end index.")
+    
+    # Extract and return the substring
+    result = source[start:end]
+    return result
     
 def evaluate(exp, variables, output):
     args = exp[1:-1].split(" ", 1)
