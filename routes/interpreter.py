@@ -54,8 +54,10 @@ def puts(arg, variables, output):
         res = evaluate(arg, variables, output)  
     elif arg in variables:
         res = variables[arg]
-    else:
+    elif arg.strip().startswith("\""):
         res = get_string(arg)
+    else:
+        res = str(arg)
     output.append(res)
 
 def sets(arg, variables):
@@ -147,9 +149,19 @@ def stri(arg1, variables):
     if arg1 in variables:
         return str(variables[arg1])
     elif is_function_invocation(arg1):
-        return str(evaluate(arg1))
+        return str(evaluate(arg1, variables, []))
     else:
         return str(arg1)
+    
+def add(arg1, variables):
+    args = arg1.split(" ")
+    sum = 0
+    for arg in args:
+        if arg in variables:
+            sum += variables[arg]
+        else:
+            sum += int(arg)
+    return sum
     
 def evaluate(exp, variables, output):
     args = exp[1:-1].split(" ", 1)
@@ -166,6 +178,9 @@ def evaluate(exp, variables, output):
         return lowercase(args[1], variables)
     elif function == "str":
         return stri(args[1], variables)
+    elif function =="add":
+        return add(args[1], variables)
+
 
 def evaluateAll(expressions):
     variables = {}
