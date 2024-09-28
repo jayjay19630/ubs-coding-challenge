@@ -9,12 +9,12 @@ from routes import app
 logger = logging.getLogger(__name__)
 
 # Define the POST endpoint
-@app.route('/lab_work', methods=['POST'])
-def lab_work():
+@app.route('/coolcodehack', methods=['POST'])
+def coolcodehack():
     try:
         res = {
             "username": "theslothspy",
-            "password": "JOwi905$%"
+            "password": "JOwi905$%",
         }
         return jsonify(res) 
 
