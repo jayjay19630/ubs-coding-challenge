@@ -33,7 +33,7 @@ def move_bullets(bullets, grid):
         elif direction == 'r':
             new_c += 1
         
-        # Ensure bullets stay inside the grid, or stop moving if they go out of bounds
+        # Ensure bullets stay inside the grid, or remove them if they go out of bounds
         if 0 <= new_r < len(grid) and 0 <= new_c < len(grid[0]):
             new_bullets.append((new_r, new_c, direction))
     
@@ -52,6 +52,7 @@ opp_bullet = {
 def is_safe_move(r, c, move, grid, bullets):
     if 0 <= r < len(grid) and 0 <= c < len(grid[0]):
         for (br, bc, m) in bullets:
+            # Check if bullet is in the next move position and moving towards the player
             if r == br and c == bc and opp_bullet[move] == m:
                 return False
         return True
@@ -75,8 +76,10 @@ def is_safe_after_bullet_move(r, c, bullets):
 
 # Recursive DFS to dodge bullets without using a visited set
 def dodge_bullets(grid, player_pos, bullets, instructions):
-    print(bullets)
-    print(player_pos)
+    # Base case: if there are no more bullets and the player is safe, return instructions
+    if not bullets:
+        return instructions
+
     for dr, dc, move in move_directions:
         new_r = player_pos[0] + dr
         new_c = player_pos[1] + dc
@@ -85,10 +88,6 @@ def dodge_bullets(grid, player_pos, bullets, instructions):
         if is_safe_move(new_r, new_c, move, grid, bullets) and is_safe_after_bullet_move(new_r, new_c, bullets):
             next_bullets = move_bullets(bullets, grid)
             new_instructions = instructions[:] + [move]
-            
-            # If the bullets are not moving anymore and the player is in a safe spot, return the path
-            if not next_bullets:
-                return new_instructions
             
             # Recur with the new state
             result = dodge_bullets(grid, (new_r, new_c), next_bullets, new_instructions)
@@ -106,10 +105,6 @@ def dodge_endpoint():
     map_str = request.data.decode('utf-8')
     grid, player_pos, bullets = parse_map(map_str)
     
-    print(grid)
-    print(player_pos)
-    print(bullets)
-    
     # Try to find instructions to dodge all bullets using DFS without visited set
     instructions = dodge_bullets(grid, player_pos, bullets, [])
     
@@ -118,4 +113,3 @@ def dodge_endpoint():
         return jsonify({"instructions": None})
     
     return jsonify({"instructions": instructions})
-
