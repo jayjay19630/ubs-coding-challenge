@@ -218,35 +218,12 @@ def lt(arg1, variables): #done
     else:
         return "false"
 
-
 def subtract(arg1, variables): 
     args = parse_arguments(arg1)
+    arg1 = get_number(args[0], variables)
+    arg2 = get_number(args[1], variables)
         
-    is_int = True  # Track if all arguments are integers
-    
-    if is_function_invocation(args[0]):
-        result = evaluate(args[0], variables, [])  # Evaluate function
-        is_int = is_int and isinstance(result, int)
-    elif args[0] in variables:
-        result = float(variables[args[0]]) if '.' in str(variables[args[0]]) else int(variables[args[0]])
-        is_int = is_int and isinstance(result, int)
-    else:
-        result = float(args[0]) if '.' in str(args[0]) else int(args[0])
-        is_int = is_int and isinstance(result, int)
-    
-    for arg in args[1:]:
-        if is_function_invocation(arg):
-            value = evaluate(arg, variables, [])  # Evaluate function
-        elif arg in variables:
-            value = float(variables[arg]) if '.' in str(variables[arg]) else int(variables[arg])
-        else:
-            value = float(arg) if '.' in str(arg) else int(arg)
-        
-        is_int = is_int and isinstance(value, int)
-        result -= value  # Subtract the value
-    
-    return int(result) if is_int else float(result)
-
+    return str(arg1 - arg2)
 def divide(arg1, variables):
     args = parse_arguments(arg1)
     if len(args) == 1:
@@ -359,7 +336,7 @@ request = {
     "expressions": [
         "(puts \"heloo\")",
         "(set x 5)",
-        "(puts (uppercase (lowercase (str (abs (multiply 1 324 -34))))))",
+        "(puts (uppercase (lowercase (str (abs (subtract 5 334))))))",
         "(puts (concat \"heloo\" (concat \"heloo\" \"heloo\")))",
         "(puts (replace \"heloo\" \"o\" (concat \"heloo\" \"heloo\")))"
     ]
