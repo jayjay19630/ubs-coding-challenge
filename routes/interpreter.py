@@ -58,7 +58,11 @@ def puts(arg, variables, output):
         res = get_string(arg)
     else:
         res = str(arg)
-    output.append(res)
+    
+    if isinstance(res, float):
+        output.append(round(res, 4))
+    else:
+        output.append(res)
 
 def sets(arg, variables):
     args = arg.split(" ", 1)
@@ -195,6 +199,8 @@ def mini(arg1, variables):
     args = parse_arguments(arg1)
     mini = float('inf')
     for arg in args:
+        print(arg)
+        print(variables)
         if is_function_invocation(arg):
             mini = min(mini, evaluate(arg, variables, []))  # Evaluate function
         elif arg in variables:
@@ -213,7 +219,7 @@ def maxi(arg1, variables):
             maxi = max(maxi, float(variables[arg]))  # Fetch value from variables
         else:
             maxi = max(maxi, float(arg))  # Convert to float
-    return round(maxi, 4)  # Round to 4 decimal places
+    return maxi
 
 def subtract(arg1, variables):
     args = parse_arguments(arg1)
@@ -231,7 +237,7 @@ def subtract(arg1, variables):
             result -= float(variables[arg])  # Fetch value from variables
         else:
             result -= float(arg)  # Convert to float
-    return round(result, 4)  # Round to 4 decimal places
+    return result
 
 def divide(arg1, variables):
     args = parse_arguments(arg1)
@@ -249,7 +255,7 @@ def divide(arg1, variables):
             result /= float(variables[arg])  # Fetch value from variables
         else:
             result /= float(arg)  # Convert to float
-    return round(result, 4)  # Round to 4 decimal places
+    return result
 
 def multiply(arg1, variables):
     args = parse_arguments(arg1)
@@ -262,7 +268,7 @@ def multiply(arg1, variables):
             product *= float(variables[arg])  # Fetch value from variables
         else:
             product *= float(arg)  # Convert to float
-    return round(product, 4)  # Round to 4 decimal places
+    return product
     
 def replace(arg1, variables):
     return ""
